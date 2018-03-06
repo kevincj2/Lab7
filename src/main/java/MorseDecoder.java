@@ -25,7 +25,6 @@ import java.util.Scanner;
  * each symbol in a table and return the corresponding letter value.
  */
 public class MorseDecoder {
-
     /**
      * Bin size for power binning. We compute power over bins of this size. You will probably not
      * need to modify this value.
@@ -53,6 +52,12 @@ public class MorseDecoder {
 
         double[] sampleBuffer = new double[BIN_SIZE * inputFile.getNumChannels()];
         for (int binIndex = 0; binIndex < totalBinCount; binIndex++) {
+           inputFile.readFrames(sampleBuffer, BIN_SIZE);
+           int sum = 0;
+           for (int i = 0; i < sampleBuffer.length; i++) {
+               sum += sampleBuffer[i] * sampleBuffer[i];
+           }
+           returnBuffer[binIndex] = sum;
             // Get the right number of samples from the inputFile
             // Sum all the samples together and store them in the returnBuffer
         }
@@ -81,13 +86,33 @@ public class MorseDecoder {
          * There are four conditions to handle. Symbols should only be output when you see
          * transitions. You will also have to store how much power or silence you have seen.
          */
-
         // if ispower and waspower
         // else if ispower and not waspower
         // else if issilence and wassilence
         // else if issilence and not wassilence
-
-        return "";
+        String symbol = "";
+        for (int i = 1; i < powerMeasurements.length - 1; i++) {
+            int length = 0;
+            if (powerMeasurements[i] != powerMeasurements[i - 1]) {
+                if (powerMeasurements[i - 1] < POWER_THRESHOLD) {
+                    symbol += " ";
+                } else if (powerMeasurements[i] > POWER_THRESHOLD) {
+                    for (int j = i - 1; j >= 0; j--) {
+                        if (powerMeasurements[j] == powerMeasurements[j - 1]) {
+                                length++;
+                        } else {
+                            break;
+                        }
+                    }
+                    if (length + 1 > DASH_BIN_COUNT) {
+                        symbol += "-";
+                    } else {
+                        symbol += ".";
+                    }
+                }
+            }
+        }
+        return symbol;
     }
 
     /**
